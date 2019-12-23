@@ -36,6 +36,13 @@
 #include <atomic.h>
 
 // Easier names for the boards
+#if defined(__IMXRT1062__)  // Teensy 4.0
+#define ADC_TEENSY_4_0
+// Move all of the IMXRT module stuff to different files
+#include "ADC_Module_t4.h"
+
+#else
+
 #if defined(__MK20DX256__) // Teensy 3.1
 #define ADC_TEENSY_3_1
 #elif defined(__MK20DX128__) // Teensy 3.0
@@ -49,7 +56,6 @@
 #else
 #error "Board not supported!"
 #endif
-
 
 
 // Teensy 3.1 has 2 ADCs, Teensy 3.0 and LC only 1.
@@ -1051,5 +1057,6 @@ protected:
 
 };
 
+#endif // IMXRT... 
 
 #endif // ADC_MODULE_H

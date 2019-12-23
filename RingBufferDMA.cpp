@@ -24,6 +24,7 @@
  */
 
 #include "RingBufferDMA.h"
+#if !defined(__IMXRT1062__)  // Teensy 4.0
 
 // Constructor
 RingBufferDMA::RingBufferDMA(volatile int16_t* elems, uint32_t len, uint8_t ADC_num) :
@@ -134,3 +135,5 @@ int16_t RingBufferDMA::read() {
 uint16_t RingBufferDMA::increase(uint16_t p) {
     return (p + 1)&(2*b_size-1);
 }
+
+#endif // Not T4

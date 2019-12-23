@@ -11,7 +11,6 @@ int readPin = A2; // ADC0
 ADC *adc = new ADC();; // adc object
 
 void setup() {
-
     pinMode(LED_BUILTIN, OUTPUT);
     pinMode(readPin, INPUT);
 
@@ -20,7 +19,7 @@ void setup() {
 
     ///// ADC0 ////
     // reference can be ADC_REFERENCE::REF_3V3, ADC_REFERENCE::REF_1V2 (not for Teensy LC) or ADC_REFERENCE::REF_EXT.
-    //adc->setReference(ADC_REFERENCE::REF_1V2, ADC_0); // change all 3.3 to 1.2 if you change the reference to 1V2
+
 
     adc->setAveraging(16); // set number of averages
     adc->setResolution(16); // set bits of resolution

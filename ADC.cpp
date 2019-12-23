@@ -88,6 +88,12 @@ const uint8_t ADC::channel2sc1aADC0[]= { // new version, gives directly the sc1a
     31, 31, 31, 31, 31, 31, 31, 31, 31, // 53-61
     31, 31, 3+ADC_SC1A_PIN_DIFF, 31+ADC_SC1A_PIN_DIFF, 23, 31 // 62-67 64: A10, 65: A11 (NOT CONNECTED), 66: A21, 67: A22(ADC1)
 };
+#elif defined(ADC_TEENSY_4_0)
+const uint8_t ADC::channel2sc1aADC0[]= { // new version, gives directly the sc1a number. 0x1F=31 deactivates the ADC.
+   7, 8, 12, 11, 6, 5, 15, 0, 13, 14, 1, 2, 31, 31, // 0-13, we treat them as A0-A13
+   7, 8, 12, 11, 6, 5, 15, 0, 13, 14, 1, 2, 31, 31
+};
+
 #endif // defined
 
 ///////// ADC1
@@ -121,6 +127,11 @@ const uint8_t ADC::channel2sc1aADC1[]= { // new version, gives directly the sc1a
     31, 31, 31, 31, 31, 10, 11, 31, 31, // 44-52, 49: A23, 50: A24
     31, 31, 31, 31, 31, 31, 31, 31, 31, // 53-61
     31, 31, 0+ADC_SC1A_PIN_DIFF, 19+ADC_SC1A_PIN_DIFF, 31, 23 // 61-67 64: A10, 65: A11, 66: A21(ADC0), 67: A22
+};
+#elif defined(ADC_TEENSY_4_0)
+const uint8_t ADC::channel2sc1aADC1[]= { // new version, gives directly the sc1a number. 0x1F=31 deactivates the ADC.
+   7, 8, 12, 11, 6, 5, 15, 0, 13, 14, 31, 31, 3, 4, // 0-13, we treat them as A0-A13
+   7, 8, 12, 11, 6, 5, 15, 0, 13, 14, 31, 31, 3, 4
 };
 #endif
 
@@ -196,9 +207,14 @@ const uint8_t ADC::sc1a2channelADC1[]= { // new version, gives directly the pin 
 
 // Constructor
 ADC::ADC() : // awkward initialization  so there are no -Wreorder warnings
-    adc0_obj(0, channel2sc1aADC0, diff_table_ADC0)
+    #if defined(ADC_TEENSY_4_0)
+    adc0_obj(IMXRT_ADC1S, 0, channel2sc1aADC0)
+    , adc1_obj(IMXRT_ADC2S, 1, channel2sc1aADC1)
+    #else
+    adc0_obj(0, channel2sc1aADC0, diff_table_ADC)
     #if ADC_NUM_ADCS>1
     , adc1_obj(1, channel2sc1aADC1, diff_table_ADC1)
+    #endif
     #endif
     {
     //ctor
@@ -206,11 +222,14 @@ ADC::ADC() : // awkward initialization  so there are no -Wreorder warnings
     //digitalWriteFast(LED_BUILTIN, HIGH);
 
     // make sure the clocks to the ADC are on
+    #if defined(ADC_TEENSY_4_0)
+        // The core/teensy4 code already enabled the clocks
+    #else
     SIM_SCGC6 |= SIM_SCGC6_ADC0;
     #if ADC_NUM_ADCS>1
     SIM_SCGC3 |= SIM_SCGC3_ADC1;
     #endif
-
+    #endif
 }
 
 
@@ -635,7 +654,10 @@ int ADC::analogRead(uint8_t pin, int8_t adc_num) {
 */
 int ADC::analogReadDifferential(uint8_t pinP, uint8_t pinN, int8_t adc_num) {
 
-    #if ADC_NUM_ADCS==1
+    #if ADC_DIFF_PAIRS==0
+    // T4 does not have any?
+    return ADC_ERROR_VALUE;
+    #elif ADC_NUM_ADCS==1
     /* Teensy 3.0, LC
     */
     if( adc_num==1 ) { // If asked to use ADC1, return error
@@ -739,7 +761,13 @@ bool ADC::startSingleRead(uint8_t pin, int8_t adc_num) {
 *   restart the adc if it stopped a measurement. If you modify the adc_isr then this won't happen.
 */
 bool ADC::startSingleDifferential(uint8_t pinP, uint8_t pinN, int8_t adc_num) {
-    #if ADC_NUM_ADCS==1
+            adc0->fail_flag |= ADC_ERROR::WRONG_PIN;
+            adc1->fail_flag |= ADC_ERROR::WRONG_PIN;
+            return false;   // all others are invalid
+    #if ADC_DIFF_PAIRS==0
+    adc0->fail_flag |= ADC_ERROR::OTHER;
+    return false;
+    #elif ADC_NUM_ADCS==1
     /* Teensy 3.0, LC
     */
     if( adc_num==1 ) { // If asked to use ADC1, return error
@@ -854,7 +882,10 @@ bool ADC::startContinuous(uint8_t pin, int8_t adc_num) {
 * Other pins will return ADC_ERROR_DIFF_VALUE.
 */
 bool ADC::startContinuousDifferential(uint8_t pinP, uint8_t pinN, int8_t adc_num) {
-    #if ADC_NUM_ADCS==1
+    #if ADC_DIFF_PAIRS==0
+    adc0->fail_flag |= ADC_ERROR::OTHER;
+    return false;
+    #elif ADC_NUM_ADCS==1
     /* Teensy 3.0, LC
     */
     if( adc_num==1 ) { // If asked to use ADC1, return error
@@ -1030,7 +1061,10 @@ ADC::Sync_result ADC::analogSynchronizedRead(uint8_t pin0, uint8_t pin1) {
 ADC::Sync_result ADC::analogSynchronizedReadDifferential(uint8_t pin0P, uint8_t pin0N, uint8_t pin1P, uint8_t pin1N) {
 
     Sync_result res = {ADC_ERROR_VALUE, ADC_ERROR_VALUE};;
-
+    #if ADC_DIFF_PAIRS==0
+    // T4 does not have any?
+    return res;
+    #else
     // check pins
     if(!adc0->checkDifferentialPins(pin0P, pin0N)) {
         adc0->fail_flag |= ADC_ERROR::WRONG_PIN;
@@ -1111,6 +1145,7 @@ ADC::Sync_result ADC::analogSynchronizedReadDifferential(uint8_t pin0P, uint8_t 
     //digitalWriteFast(LED_BUILTIN, !digitalReadFast(LED_BUILTIN) );
 
     return res;
+    #endif
 }
 
 /////////////// SYNCHRONIZED NON-BLOCKING METHODS //////////////
@@ -1172,7 +1207,11 @@ bool ADC::startSynchronizedSingleRead(uint8_t pin0, uint8_t pin1) {
 *   If this function interrupts a measurement, it stores the settings in adc_config
 */
 bool ADC::startSynchronizedSingleDifferential(uint8_t pin0P, uint8_t pin0N, uint8_t pin1P, uint8_t pin1N) {
-
+    #if ADC_DIFF_PAIRS==0
+    // T4 does not have any?
+    adc0->fail_flag |= ADC_ERROR::WRONG_PIN;
+    return false;
+    #else
     // check pins
     if(!adc0->checkDifferentialPins(pin0P, pin0N)) {
         adc0->fail_flag |= ADC_ERROR::WRONG_PIN;
@@ -1212,6 +1251,7 @@ bool ADC::startSynchronizedSingleDifferential(uint8_t pin0P, uint8_t pin0N, uint
     //digitalWriteFast(LED_BUILTIN, !digitalReadFast(LED_BUILTIN) );
 
     return true;
+    #endif
 }
 
 // Reads the analog value of a single conversion.
@@ -1251,6 +1291,9 @@ bool ADC::startSynchronizedContinuous(uint8_t pin0, uint8_t pin1) {
 
     // setup the conversions the usual way, but to make sure that they are
     // as synchronized as possible we stop and restart them one after the other.
+    #if defined(ADC_TEENSY_4_0)
+    // BUGBUG to do
+    #else
     const uint32_t temp_ADC0_SC1A = ADC0_SC1A; ADC0_SC1A = 0x1F;
     const uint32_t temp_ADC1_SC1A = ADC1_SC1A; ADC1_SC1A = 0x1F;
 
@@ -1258,7 +1301,7 @@ bool ADC::startSynchronizedContinuous(uint8_t pin0, uint8_t pin1) {
     ADC0_SC1A = temp_ADC0_SC1A;
     ADC1_SC1A = temp_ADC1_SC1A;
     __enable_irq();
-
+    #endif
     return true;
 }
 
@@ -1268,6 +1311,11 @@ bool ADC::startSynchronizedContinuous(uint8_t pin0, uint8_t pin1) {
 */
 bool ADC::startSynchronizedContinuousDifferential(uint8_t pin0P, uint8_t pin0N, uint8_t pin1P, uint8_t pin1N) {
 
+    #if ADC_DIFF_PAIRS==0
+    // T4 does not have any?
+    adc0->fail_flag |= ADC_ERROR::WRONG_PIN;
+    return false;
+    #else
     // check pins
     if(!adc0->checkDifferentialPins(pin0P, pin0N)) {
         adc0->fail_flag |= ADC_ERROR::WRONG_PIN;
@@ -1293,6 +1341,7 @@ bool ADC::startSynchronizedContinuousDifferential(uint8_t pin0P, uint8_t pin0N, 
 
 
     return true;
+    #endif
 }
 
 //! Returns the values of both ADCs.

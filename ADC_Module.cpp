@@ -30,6 +30,10 @@
 
 
 #include "ADC_Module.h"
+
+// Don't use this file when building for T4
+#if !defined(__IMXRT1062__)  // Teensy 4.0
+
 //#include "ADC.h"
 
 // include the internal reference
@@ -1266,3 +1270,5 @@ uint32_t ADC_Module::getPDBFrequency() {
 }
 
 #endif
+
+#endif // Not T4
