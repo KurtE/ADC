@@ -211,7 +211,7 @@ ADC::ADC() : // awkward initialization  so there are no -Wreorder warnings
     adc0_obj(IMXRT_ADC1S, 0, channel2sc1aADC0)
     , adc1_obj(IMXRT_ADC2S, 1, channel2sc1aADC1)
     #else
-    adc0_obj(0, channel2sc1aADC0, diff_table_ADC)
+    adc0_obj(0, channel2sc1aADC0, diff_table_ADC0)
     #if ADC_NUM_ADCS>1
     , adc1_obj(1, channel2sc1aADC1, diff_table_ADC1)
     #endif
