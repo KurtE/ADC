@@ -189,7 +189,11 @@ enum class ADC_REFERENCE : uint8_t {
 #elif defined(ADC_TEENSY_3_6) // Teensy 3.6
         #define ADC_MAX_PIN (67)
 #elif defined(ADC_TEENSY_4) // Teensy 4
+#if defined(ARDUINO_TEENSY41)
+        #define ADC_MAX_PIN (41)
+#else
         #define ADC_MAX_PIN (27)
+#endif
 #endif
 
 // number of differential pairs PER ADC!

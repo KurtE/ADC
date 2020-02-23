@@ -89,11 +89,21 @@ const uint8_t ADC::channel2sc1aADC0[]= { // new version, gives directly the sc1a
     31, 31, 3+ADC_SC1A_PIN_DIFF, 31+ADC_SC1A_PIN_DIFF, 23, 31 // 62-67 64: A10, 65: A11 (NOT CONNECTED), 66: A21, 67: A22(ADC1)
 };
 #elif defined(ADC_TEENSY_4)
+#if defined(ARDUINO_TEENSY41)
+const uint8_t ADC::channel2sc1aADC0[]= { // new version, gives directly the sc1a number. 0x1F=31 deactivates the ADC.
+    7, 8, 12, 11, 6, 5, 15, 0, 13, 14, 1, 2, 31, 31, // 0-13, we treat them as A0-A13
+    7, 8, 12, 11, 6, 5, 15, 0, 13, 14, // 14-23 (A0-A9)
+    1, 2, 31, 31, // A10, A11, A12, A13
+    31, 31, 31, 31, 31, 31, 31, 31, 31, 31, // 28-37
+    31,31, 9, 10 // A14-A17
+};
+#else
 const uint8_t ADC::channel2sc1aADC0[]= { // new version, gives directly the sc1a number. 0x1F=31 deactivates the ADC.
     7, 8, 12, 11, 6, 5, 15, 0, 13, 14, 1, 2, 31, 31, // 0-13, we treat them as A0-A13
     7, 8, 12, 11, 6, 5, 15, 0, 13, 14, // 14-23 (A0-A9)
     1, 2, 31, 31 // A10, A11, A12, A13
 };
+#endif
 #endif // defined
 
 ///////// ADC1
@@ -129,11 +139,21 @@ const uint8_t ADC::channel2sc1aADC1[]= { // new version, gives directly the sc1a
     31, 31, 0+ADC_SC1A_PIN_DIFF, 19+ADC_SC1A_PIN_DIFF, 31, 23 // 61-67 64: A10, 65: A11, 66: A21(ADC0), 67: A22
 };
 #elif defined(ADC_TEENSY_4)
+#if defined(ARDUINO_TEENSY41)
+const uint8_t ADC::channel2sc1aADC1[]= { // new version, gives directly the sc1a number. 0x1F=31 deactivates the ADC.
+    7, 8, 12, 11, 6, 5, 15, 0, 13, 14, 31, 31, 3, 4, // 0-13, we treat them as A0-A13
+    7, 8, 12, 11, 6, 5, 15, 0, 13, 14, // 14-23 (A0-A9)
+    31, 31, 3, 4, // A10, A11, A12, A13  //27
+    31, 31, 31, 31, 31, 31, 31, 31, 31, 31, // 28-37
+    1, 2, 9, 10  // A14-A17 (38-41)
+};
+#else
 const uint8_t ADC::channel2sc1aADC1[]= { // new version, gives directly the sc1a number. 0x1F=31 deactivates the ADC.
     7, 8, 12, 11, 6, 5, 15, 0, 13, 14, 31, 31, 3, 4, // 0-13, we treat them as A0-A13
     7, 8, 12, 11, 6, 5, 15, 0, 13, 14, // 14-23 (A0-A9)
     31, 31, 3, 4 // A10, A11, A12, A13
 };
+#endif
 #endif
 
 #if defined(ADC_TEENSY_3_1) // Teensy 3.1
@@ -188,11 +208,19 @@ const uint8_t ADC::sc1a2channelADC0[]= { // new version, gives directly the pin 
     0 // 31 means disabled, but just in case
 };
 #elif defined(ADC_TEENSY_4)
+#if defined(ARDUINO_TEENSY41)
+const uint8_t ADC::sc1a2channelADC0[]= { // new version, gives directly the pin number
+    21, 24, 25, 0, 0, 19, 18, 14, 15, 40, 41, 17, 16, 22,
+    23, 20, 0, 0, 0, 0, 0, 0, //14-21
+    0, 0, 0, 0, 0, 0    //22-27
+};
+#else
 const uint8_t ADC::sc1a2channelADC0[]= { // new version, gives directly the pin number
     21, 24, 25, 0, 0, 19, 18, 14, 15, 0, 0, 17, 16, 22,
     23, 20, 0, 0, 0, 0, 0, 0, //14-21
     0, 0, 0, 0, 0, 0    //22-27
 };
+#endif
 #endif // defined
 
 ///////// ADC1
@@ -211,11 +239,19 @@ const uint8_t ADC::sc1a2channelADC1[]= { // new version, gives directly the pin 
     0
 };
 #elif defined(ADC_TEENSY_4)
+#if defined(ARDUINO_TEENSY41)
+const uint8_t ADC::sc1a2channelADC1[]= { // new version, gives directly the pin number
+    21, 38, 39, 26, 27, 19, 18, 14, 15, 40, 41, 17, 16, 22, // 0-13
+    23, 20, 0, 0, 0, 0, 0, 0, //14-21
+    0, 0, 0, 0, 0, 0    //22-27
+};
+#else
 const uint8_t ADC::sc1a2channelADC1[]= { // new version, gives directly the pin number
     21, 0, 0, 26, 27, 19, 18, 14, 15, 0, 0, 17, 16, 22, // 0-13
     23, 20, 0, 0, 0, 0, 0, 0, //14-21
     0, 0, 0, 0, 0, 0    //22-27
 };
+#endif
 #endif
 
 
